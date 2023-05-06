@@ -1,4 +1,6 @@
 import { createContext, useState } from 'react';
+import { addDoc, collection, deleteDoc, doc, getDoc, query, where } from 'firebase/firestore';
+import { db } from '../firebase/firebase';
 
 const FavoritesContext = createContext({
   favorites: [],
@@ -11,20 +13,55 @@ const FavoritesContext = createContext({
 export function FavoritesContextProvider(props) {
   const [userFavorites, setUserFavorites] = useState([]);
 
-  function addFavoriteHandler(favoriteMeetup) {
-    setUserFavorites((prevUserFavorites) => {
-      return prevUserFavorites.concat(favoriteMeetup);
-    });
+  async function addFavoriteHandler(favoriteMeetup) {
+    try {
+      // Add the meetup to the favorites collection in Firestore
+      const meetupRef = doc(collection(db, 'favorites'));
+      await addDoc(meetupRef, meetup);
+
+      setUserFavorites((prevUserFavorites) => {
+        return prevUserFavorites.concat(meetup);
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  function removeFavoriteHandler(meetupId) {
-    setUserFavorites(prevUserFavorites => {
-      return prevUserFavorites.filter(meetup => meetup.id !== meetupId);
-    });
+  async function removeFavoriteHandler(meetupId) {
+    try {
+      // Remove the meetup from the favorites collection in Firestore
+      const q = query(collection(db, 'favorites'), where('id', '==', meetupId));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+
+      setUserFavorites((prevUserFavorites) => {
+        return prevUserFavorites.filter((meetup) => meetup.id !== meetupId);
+      });
+    } catch (error) {
+      console.error(error);
+    }
   }
 
-  function itemIsFavoriteHandler(meetupId) {
-    return userFavorites.some(meetup => meetup.id === meetupId);
+  function isFavoriteHandler(meetupId) {
+    return userFavorites.some((meetup) => meetup.id === meetupId);
+  }
+
+  async function fetchFavoritesHandler() {
+    try {
+      // Fetch the favorite meetups from the favorites collection in Firestore
+      const q = query(collection(db, 'favorites'));
+      const querySnapshot = await getDocs(q);
+      const meetups = [];
+      querySnapshot.forEach((doc) => {
+        meetups.push(doc.data());
+      });
+
+      setUserFavorites(meetups);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const context = {
@@ -32,7 +69,8 @@ export function FavoritesContextProvider(props) {
     totalFavorites: userFavorites.length,
     addFavorite: addFavoriteHandler,
     removeFavorite: removeFavoriteHandler,
-    itemIsFavorite: itemIsFavoriteHandler
+    isFavorite: isFavoriteHandler,
+    fetchFavorites: fetchFavoritesHandler,
   };
 
   return (
