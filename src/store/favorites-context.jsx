@@ -1,5 +1,5 @@
 import { createContext, useState } from 'react';
-import { addDoc, collection, deleteDoc, doc, getDoc, query, where } from 'firebase/firestore';
+import { setDoc, collection, deleteDoc, doc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../firebase/firebase';
 
 const FavoritesContext = createContext({
@@ -16,11 +16,10 @@ export function FavoritesContextProvider(props) {
   async function addFavoriteHandler(favoriteMeetup) {
     try {
       // Add the meetup to the favorites collection in Firestore
-      const meetupRef = doc(collection(db, 'favorites'));
-      await addDoc(meetupRef, meetup);
+      await setDoc(doc(collection(db, 'favorites'), favoriteMeetup.id), favoriteMeetup);
 
       setUserFavorites((prevUserFavorites) => {
-        return prevUserFavorites.concat(meetup);
+        return prevUserFavorites.concat(favoriteMeetup);
       });
     } catch (error) {
       console.error(error);

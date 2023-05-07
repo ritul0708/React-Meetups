@@ -7,19 +7,20 @@ import FavoritesContext from '../../store/favorites-context';
 function MeetupItem(props) {
   const favoritesCtx = useContext(FavoritesContext);
 
-  const itemIsFavorite = favoritesCtx.itemIsFavorite(props.id);
+  const itemIsFavorite = favoritesCtx.isFavorite(props.id);
 
   function toggleFavoriteStatusHandler() {
     if (itemIsFavorite) {
       favoritesCtx.removeFavorite(props.id);
     } else {
-      favoritesCtx.addFavorite({
+      const newFavorite = {
         id: props.id,
         title: props.title,
         description: props.description,
         image: props.image,
         address: props.address,
-      });
+      };
+      favoritesCtx.addFavorite(newFavorite);
     }
   }
 
