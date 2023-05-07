@@ -26,6 +26,9 @@ function MainNavigation() {
               </span>
             </Link>
           </li>
+          <li>
+            <Link to='/signup'>Signup</Link>
+          </li>
         </ul>
       </nav>
     </header>

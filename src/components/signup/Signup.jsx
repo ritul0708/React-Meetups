@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { auth, firestore, storage } from "../../firebase/firebase";
+import { useRef, useState } from "react";
+import { auth, db, storage } from "../../firebase/firebase";
 import styles from "./signup.module.css";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 function Signup() {
-  const [displayName, setDisplayName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [photoURL, setPhotoURL] = useState(null);
+  const displayNameRef = useRef("");
+  const emailRef = useRef("");
+  const passwordRef = useRef("");
+  const imageInputRef = useRef();
+  const [previewImage, setPreviewImage] = useState(null);
   const [error, setError] = useState("");
 
   const handleFileInputChange = (event) => {
@@ -15,7 +18,7 @@ function Signup() {
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onloadend = () => {
-        setPhotoURL(reader.result);
+        photoURLRef.current = reader.result;
       };
     }
   };
@@ -24,43 +27,43 @@ function Signup() {
     event.preventDefault();
 
     try {
-      const userCredential = await auth.createUserWithEmailAndPassword(
-        email,
-        password
+      const userCredential = await createUserWithEmailAndPassword(auth,
+        emailRef.current,
+        passwordRef.current
       );
 
-      await userCredential.user.updateProfile({
-        displayName,
-        photoURL,
+      await updateProfile(userCredential.user, {
+        displayName: displayNameRef.current,
+        photoURL: photoURLRef.current,
       });
 
-      await firestore.collection("users").doc(userCredential.user.uid).set({
-        displayName,
-        photoURL,
+      await db.collection("users").doc(userCredential.user.uid).set({
+        displayName: displayNameRef.current,
+        photoURL: photoURLRef.current,
       });
 
-      setDisplayName("");
-      setEmail("");
-      setPassword("");
-      setPhotoURL(null);
-      setError("");
+      displayNameRef.current = "";
+      emailRef.current = "";
+      passwordRef.current = "";
+      photoURLRef.current = null;
+      errorRef.current = "";
     } catch (error) {
-      setError(error.message);
+      errorRef.current = error.message;
     }
   };
+  // console.log(user)
 
   return (
     <div className={styles.container}>
       <form className={styles.form} onSubmit={handleSignup}>
         <h2 className={styles.title}>Sign Up</h2>
-        {error && <p>{error}</p>}
+        {errorRef.current && <p>{errorRef.current}</p>}
         <div className={styles.formGroup}>
           <label className={styles.label}>Name</label>
           <input
             className={styles.input}
             type="text"
-            value={displayName}
-            onChange={(event) => setDisplayName(event.target.value)}
+            ref={displayNameRef}
           />
         </div>
         <div className={styles.formGroup}>
@@ -68,8 +71,7 @@ function Signup() {
           <input
             className={styles.input}
             type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            ref={emailRef}
           />
         </div>
         <div className={styles.formGroup}>
@@ -77,24 +79,23 @@ function Signup() {
           <input
             className={styles.input}
             type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            ref={passwordRef}
           />
         </div>
         <div className={styles.formGroup}>
           <label className={styles.label}>Profile Picture</label>
-          <div className={styles.preview}>
-            {photoURL ? (
-              <img src={photoURL} alt="Profile" />
-            ) : (
-              <span>No image selected</span>
-            )}
-          </div>
           <input
             type="file"
             accept="image/*"
             onChange={handleFileInputChange}
           />
+          <div className={styles.preview}>
+            {previewImage && (
+              <div className={classes.imagePreview}>
+                <img src={previewImage} alt='Preview' />
+              </div>
+            )}
+          </div>
         </div>
         <button className={styles.button} type="submit">
           Sign Up
