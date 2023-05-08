@@ -1,108 +1,62 @@
-import { useRef, useState } from "react";
-import { auth, db, storage } from "../../firebase/firebase";
-import styles from "./signup.module.css";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../store/AuthContext';
 
-function Signup() {
-  const displayNameRef = useRef("");
-  const emailRef = useRef("");
-  const passwordRef = useRef("");
-  const imageInputRef = useRef();
-  const [previewImage, setPreviewImage] = useState(null);
-  const [error, setError] = useState("");
+const Signup = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signUp } = useAuth();
 
-  const handleFileInputChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onloadend = () => {
-        photoURLRef.current = reader.result;
-      };
-    }
-  };
-
-  const handleSignup = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth,
-        emailRef.current,
-        passwordRef.current
-      );
-
-      await updateProfile(userCredential.user, {
-        displayName: displayNameRef.current,
-        photoURL: photoURLRef.current,
-      });
-
-      await db.collection("users").doc(userCredential.user.uid).set({
-        displayName: displayNameRef.current,
-        photoURL: photoURLRef.current,
-      });
-
-      displayNameRef.current = "";
-      emailRef.current = "";
-      passwordRef.current = "";
-      photoURLRef.current = null;
-      errorRef.current = "";
+      setError('');
+      setLoading(true);
+      await signUp(email, password);
     } catch (error) {
-      errorRef.current = error.message;
+      setError(error.message);
     }
+
+    setLoading(false);
   };
-  // console.log(user)
 
   return (
-    <div className={styles.container}>
-      <form className={styles.form} onSubmit={handleSignup}>
-        <h2 className={styles.title}>Sign Up</h2>
-        {errorRef.current && <p>{errorRef.current}</p>}
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Name</label>
+    <div>
+      <h2>Sign up</h2>
+      <form onSubmit={handleSubmit}>
+        {error && <div>{error}</div>} 
+        <div>
+          <label htmlFor='email'>Email</label>
           <input
-            className={styles.input}
-            type="text"
-            ref={displayNameRef}
+            type='email'
+            id='email'
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Email</label>
+        <div>
+          <label htmlFor='password'>Password</label>
           <input
-            className={styles.input}
-            type="email"
-            ref={emailRef}
+            type='password'
+            id='password'
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Password</label>
-          <input
-            className={styles.input}
-            type="password"
-            ref={passwordRef}
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Profile Picture</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileInputChange}
-          />
-          <div className={styles.preview}>
-            {previewImage && (
-              <div className={classes.imagePreview}>
-                <img src={previewImage} alt='Preview' />
-              </div>
-            )}
-          </div>
-        </div>
-        <button className={styles.button} type="submit">
-          Sign Up
+        <button type="submit" disabled={loading}>
+          Sign up
         </button>
       </form>
+      <div>
+        Already have an account? <Link to='/login'>Login</Link>
+      </div>
     </div>
   );
-}
+};
 
 export default Signup;

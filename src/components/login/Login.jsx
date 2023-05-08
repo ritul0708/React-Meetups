@@ -1,52 +1,59 @@
-import { useState } from "react";
-import { auth } from "../../firebase/firebase";
-import styles from "./login.module.css";
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../store/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
-  const handleLogin = async (event) => {
-    event.preventDefault();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
     try {
-      await auth.signInWithEmailAndPassword(email, password);
-      setEmail("");
-      setPassword("");
-      setError("");
-    } catch (error) {
-      setError(error.message);
+      await login(email, password);
+      console.log('success');
+      navigate('/')
+
+    } catch (err) {
+      setError('Failed to log in: ' + err.message);
     }
   };
 
   return (
-    <div className={styles.container}>
-      <form className={styles.form} onSubmit={handleLogin}>
-        <h2 className={styles.title}>Log In</h2>
-        {error && <p>{error}</p>}
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Email</label>
+    <div>
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        {error && <div>{error}</div>}
+        <div>
+          <label htmlFor='email'>Email</label>
           <input
-            className={styles.input}
-            type="email"
+            type='email'
+            id='email'
             value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
-        <div className={styles.formGroup}>
-          <label className={styles.label}>Password</label>
+        <div>
+          <label htmlFor='password'>Password</label>
           <input
-            className={styles.input}
-            type="password"
+            type='password'
+            id='password'
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
-        <button className={styles.button} type="submit">
-          Log In
-        </button>
+        <button type='submit'>Log in</button>
       </form>
+      <div>
+        Need an account? <Link to='/signup'>Sign up</Link>
+      </div>
     </div>
   );
 }

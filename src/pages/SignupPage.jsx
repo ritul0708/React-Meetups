@@ -1,13 +1,13 @@
-import React from 'react';
-import Signup from '../components/signup/Signup';
+import React from "react";
+import Signup from "../components/signup/Signup";
 
 const SignupPage = () => {
   return (
-    <div>
-      <h1>Signup</h1>
+    <>
+      <div>SignupPage</div>
       <Signup />
-    </div>
-  )
-}
+    </>
+  );
+};
 
 export default SignupPage;
